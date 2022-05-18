@@ -1,0 +1,5 @@
+.terraform*
+connect.sh
+hosts_inventory
+id_rsa
+terraform*
