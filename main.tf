@@ -18,8 +18,8 @@ provider "aws" {
   region  = "us-west-2"
   default_tags {
     tags = {
-     Owner = "${data.external.whoami.result.user}"
-     Timestamp = "${timestamp()}"
+      created_by = "terraform" #   Static tags only due to but https://github.com/hashicorp/terraform-provider-aws/issues/19583
+#     Timestamp = "${timestamp()}"
     }
   }
 }
@@ -103,7 +103,8 @@ resource "local_sensitive_file" "pem_file" {
 resource "aws_instance" "c3" {
   count = 1
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
-  instance_type = "t3.xlarge"
+# instance_type = "r5d.large" #	$0.144	2	16 GiB	1 x 75 NVMe SSD	Up to 10 Gigabit
+  instance_type = "t3.xlarge" # 4cpu / 16GiB / EBS - $0.1664
   key_name=aws_key_pair.key.key_name
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
@@ -122,6 +123,7 @@ connection {
 
 tags = {
     Name = "C3-${count.index} ${data.external.whoami.result.user}"
+    Owner = "${data.external.whoami.result.user}"
   }
 }
 
@@ -129,7 +131,9 @@ tags = {
 resource "aws_instance" "broker" {
   count = 3
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
-  instance_type = "t3.large"
+  instance_type = "t3.large" # 2cpu / 8GB / EBS - $ 0.832
+  # instance_type = "c5d.large" # 2cpu / 4GiB / 50 NVMe SSD - $0.096
+  # instance_type = "c5d.xlarge" # 4cpu / 8GiB / 100 NVMe SSD - $0.192
   key_name=aws_key_pair.key.key_name
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
@@ -148,6 +152,7 @@ resource "aws_instance" "broker" {
 
   tags = {
     Name = "Broker-${count.index} ${data.external.whoami.result.user}"
+    Owner = "${data.external.whoami.result.user}"
   }
 }
 
@@ -169,7 +174,8 @@ resource "local_file" "ansible_inventory" {
 
 resource "aws_instance" "ansible" {
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
-  instance_type = "t2.small"
+  instance_type = "t3.micro" # t3.micro	$0.0104	2	1 GiB	EBS Only	Up to 5 Gigabit
+  # instance_type = "t3.small" # $0.0208	2	2 GiB	EBS Only	Up to 5 Gigabit
   key_name=aws_key_pair.key.key_name
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
@@ -218,6 +224,7 @@ connection {
 
   tags = {
     Name = "Ansible ${data.external.whoami.result.user}"
+    Owner = "${data.external.whoami.result.user}"
   }
 }
 
