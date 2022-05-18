@@ -18,7 +18,8 @@ provider "aws" {
   region  = "us-west-2"
   default_tags {
     tags = {
-     Owner = "${data.external.whoami.result.user}+cops@confluent.io"
+     Owner = "${data.external.whoami.result.user}"
+     Timestamp = "${timestamp()}"
     }
   }
 }
@@ -120,7 +121,7 @@ connection {
    }
 
 tags = {
-    Name = "C3-${count.index} svelasco"
+    Name = "C3-${count.index} ${data.external.whoami.result.user}"
   }
 }
 
@@ -146,7 +147,7 @@ resource "aws_instance" "broker" {
    }
 
   tags = {
-    Name = "Broker-${count.index} svelasco"
+    Name = "Broker-${count.index} ${data.external.whoami.result.user}"
   }
 }
 
@@ -216,7 +217,7 @@ connection {
 
 
   tags = {
-    Name = "Ansible"
+    Name = "Ansible ${data.external.whoami.result.user}"
   }
 }
 
