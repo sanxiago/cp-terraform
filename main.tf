@@ -75,18 +75,15 @@ resource "aws_security_group" "internal" {
 
 resource "tls_private_key" "pk" {
   algorithm = "RSA"
-  rsa_bits  = 4096
 }
 
 
-resource "aws_key_pair" "deployer" {
-  depends_on = [ tls_private_key.pk ]
-  key_name   = "svelascos_key"
+resource "aws_key_pair" "key" {
   public_key = tls_private_key.pk.public_key_openssh
 }
 
+
 resource "local_sensitive_file" "pem_file" {
-  depends_on = [ tls_private_key.pk ]
   filename = "id_rsa"
   file_permission = "600"
   content = tls_private_key.pk.private_key_pem
@@ -96,7 +93,7 @@ resource "aws_instance" "c3" {
   count = 1
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
   instance_type = "t3.xlarge"
-  key_name= "svelascos_key"
+  key_name=aws_key_pair.key.key_name
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
 connection {
@@ -123,7 +120,7 @@ resource "aws_instance" "broker" {
   count = 3
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
   instance_type = "t3.large"
-  key_name= "svelascos_key"
+  key_name=aws_key_pair.key.key_name
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
  connection {
@@ -164,7 +161,7 @@ resource "local_file" "ansible_inventory" {
 resource "aws_instance" "ansible" {
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
   instance_type = "t2.small"
-  key_name= "svelascos_key"
+  key_name=aws_key_pair.key.key_name
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
 depends_on = [ 
