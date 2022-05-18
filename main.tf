@@ -80,7 +80,7 @@ resource "aws_key_pair" "deployer" {
 resource "aws_instance" "c3" {
   count = 1
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
-  instance_type = "t2.xlarge"
+  instance_type = "t3.xlarge"
   key_name= "svelascos_key"
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
@@ -107,7 +107,7 @@ tags = {
 resource "aws_instance" "broker" {
   count = 3
   ami           = "ami-056c679fab9e48d8a" #CentOS 8
-  instance_type = "t2.xlarge"
+  instance_type = "t3.large"
   key_name= "svelascos_key"
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
@@ -191,6 +191,7 @@ connection {
    "cp ~/cp-ansible/ansible_collections/confluent/platform/ansible.cfg .",
    "ansible-playbook -i hosts.yml cp-ansible/ansible_collections/confluent/platform/playbooks/all.yml -vvv  >> /tmp/provision.log"
   ]
+   on_failure = continue
   }
 
 
@@ -200,17 +201,7 @@ connection {
   }
 }
 
-data "template_file" "result" {
-template = "ssh $${ansible} -D9000\nhttp://$${c3}:9021"
-vars = {
-    ansible = tostring(aws_instance.ansible.*.public_dns[0])
-    c3 = tostring(aws_instance.c3.*.private_dns[0])
-}
-} 
 
-output "final" {
- value = "${data.template_file.result.rendered}"
-}
 
 output "brokers" {
  value = aws_instance.broker.*.private_dns
@@ -224,3 +215,27 @@ output "ansible" {
   value = aws_instance.ansible.*.public_dns
 }
 
+
+
+data "template_file" "result" {
+template = "#!/bin/bash\npkill -f ssh $${ansible}\nssh $${ansible} -D9000 &\ndisown\n/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --proxy-server='socks5://127.0.0.1:9000' --user-data-dir='/tmp'  --no-first-run http://$${c3}:9021 &\ndisown\nexit 0"
+vars = {
+    ansible = tostring(aws_instance.ansible.*.public_dns[0])
+    c3 = tostring(aws_instance.c3.*.private_dns[0])
+}
+} 
+
+resource "local_file" "connect_script" {
+    content = "${data.template_file.result.rendered}"
+    filename= "connect.sh"
+}
+
+resource "null_resource" "ready" {
+  depends_on = [ local_file.connect_script ] 
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+  provisioner "local-exec" {
+    command = "exec ./connect.sh&>/dev/null\ndisown"
+  }
+}
