@@ -9,10 +9,20 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
+data "external" "whoami" {
+ program = [ "python",  "-c",  "import getpass; import json; j = { 'user' :getpass.getuser()}; print(json.dumps(j))" ]
+}
+
 provider "aws" {
   profile = "default"
   region  = "us-west-2"
+  default_tags {
+    tags = {
+     Owner = "${data.external.whoami.result.user}+cops@confluent.io"
+    }
+  }
 }
+
 
 resource "aws_security_group" "main" {
   egress = [
@@ -111,7 +121,6 @@ connection {
 
 tags = {
     Name = "C3-${count.index} svelasco"
-    Owner = "svelasco+cops@confluent.io"
   }
 }
 
@@ -138,7 +147,6 @@ resource "aws_instance" "broker" {
 
   tags = {
     Name = "Broker-${count.index} svelasco"
-    Owner = "svelasco+cops@confluent.io"
   }
 }
 
@@ -208,8 +216,7 @@ connection {
 
 
   tags = {
-    Name = "Ansible svelasco"
-    Owner = "svelasco+cops@confluent.io"
+    Name = "Ansible"
   }
 }
 
