@@ -218,7 +218,7 @@ output "ansible" {
 
 
 data "template_file" "result" {
-template = "#!/bin/bash\npkill -f ssh $${ansible}\nssh $${ansible} -D9000 &\ndisown\n/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --proxy-server='socks5://127.0.0.1:9000' --user-data-dir='/tmp'  --no-first-run http://$${c3}:9021 &\ndisown\nexit 0"
+template = "#!/bin/bash\npkill -f ssh $${ansible}\nsleep 1;ssh $${ansible} -D9000 &>/dev/null &\n/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --proxy-server='socks5://127.0.0.1:9000' --user-data-dir='/tmp'  --no-first-run http://$${c3}:9021 &>/dev/null &"
 vars = {
     ansible = tostring(aws_instance.ansible.*.public_dns[0])
     c3 = tostring(aws_instance.c3.*.private_dns[0])
