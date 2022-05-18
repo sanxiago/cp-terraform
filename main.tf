@@ -72,19 +72,24 @@ resource "aws_security_group" "internal" {
   ]
 }
 
-resource "null_resource" "key" {
-  provisioner "local-exec" {
-    command = "ssh-keygen -b 4096 -t rsa -f $OUTPUT_PATH/id_rsa -q -N ''"
-    environment = { 
-        OUTPUT_PATH = "${path.module}"
-    }
-  }
+
+resource "tls_private_key" "pk" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
-resource "aws_key_pair" "deployer" {
-  key_name   = "svelascos_key"
-  public_key = "${file("${path.module}/id_rsa.pub")}"
 
+resource "aws_key_pair" "deployer" {
+  depends_on = [ tls_private_key.pk ]
+  key_name   = "svelascos_key"
+  public_key = tls_private_key.pk.public_key_openssh
+}
+
+resource "local_sensitive_file" "pem_file" {
+  depends_on = [ tls_private_key.pk ]
+  filename = "id_rsa"
+  file_permission = "600"
+  content = tls_private_key.pk.private_key_pem
 }
 
 resource "aws_instance" "c3" {
@@ -98,7 +103,7 @@ connection {
    type    = "ssh"
    user    = "centos"
    host    = self.public_ip
-   private_key   = "${file("${path.module}/id_rsa")}"
+   private_key   = tls_private_key.pk.private_key_pem
  }
 
   provisioner "remote-exec" {
@@ -125,7 +130,7 @@ resource "aws_instance" "broker" {
    type    = "ssh"
    user    = "centos"
    host    = self.public_ip
-   private_key   = "${file("${path.module}/id_rsa")}"
+   private_key   = tls_private_key.pk.private_key_pem
  }
 
   provisioner "remote-exec" {
@@ -163,14 +168,14 @@ resource "aws_instance" "ansible" {
   vpc_security_group_ids = [aws_security_group.internal.id,aws_security_group.main.id]
 
 depends_on = [ 
-    local_file.ansible_inventory
+    local_file.ansible_inventory,
 ]
 
 connection {
    type    = "ssh"
    user    = "centos"
    host    = self.public_ip
-   private_key   = "${file("${path.module}/id_rsa")}"
+   private_key   = tls_private_key.pk.private_key_pem
  }
 
   provisioner "file" {
