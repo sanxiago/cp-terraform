@@ -1,0 +1,6 @@
+
+Host *.compute.internal
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+

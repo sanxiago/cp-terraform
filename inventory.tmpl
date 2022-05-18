@@ -1,0 +1,45 @@
+zookeeper:
+  hosts:
+    %{ for host in zookeepers ~}
+    ${host}:
+    %{ endfor ~}
+
+kafka_broker:
+  hosts:
+    %{ for host in brokers ~}
+    ${host}:
+    %{ endfor ~}
+
+schema_registry:
+  hosts:
+    %{ for host in schema_registries ~}
+    ${host}:
+    %{ endfor ~}
+
+kafka_rest:
+  hosts:
+    %{ for host in kafka_rests ~}
+    ${host}:
+    %{ endfor ~}
+
+ksql:
+  hosts:
+    %{ for host in ksqls ~}
+    ${host}:
+    %{ endfor ~}
+
+
+kafka_connect:
+  hosts:
+    %{ for host in kafka_connects ~}
+    ${host}:
+    %{ endfor ~}
+
+
+control_center:
+  hosts:
+    %{ for host in control_centers ~}
+    ${host}:
+    %{ endfor ~}
+
+
