@@ -72,9 +72,19 @@ resource "aws_security_group" "internal" {
   ]
 }
 
+resource "null_resource" "key" {
+  provisioner "local-exec" {
+    command = "ssh-keygen -b 4096 -t rsa -f $OUTPUT_PATH/id_rsa -q -N ''"
+    environment = { 
+        OUTPUT_PATH = "${path.module}"
+    }
+  }
+}
+
 resource "aws_key_pair" "deployer" {
   key_name   = "svelascos_key"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCcV2vsy/iih44WZfUqRXOwQFdbx98Vk8C3CLWZDq+Ai8h4ovXEqRS7FGNa0qI8yEOi+jKnqRnoyLOcPA9qaKqxlVh08NSUFOCiC0HFYnOkJlHh5ZmJVQOb9Ih2bSp4N7qcVLIa6ooYY3lPEc+ELHjx4o0LdqFC3jAxcVcv1MG8UloAa2rK2f2zqjDHatk/1KF2Nh8RdUeRuvLoePV1nmNDdvBpzJWItLq9TC+tGMFJNbnyWgHzmRfuQQYHPX30+KIPtXJ2I31YfgGJgoZbHiWMM8bsT0pP39cT/1erO9Xj5rjHvxoDNOqeyT5TqOM15KMGIZCgHREBGbFF6zWQfjffcgymBIdSpdJT9mvaeFBgVexkHwhi2JBetd6VVNP1lfzpiUKqFj5Ox7QdOPaPZrYr1/Z9qMODjMfMGOFJhIwt6fklETsItSmDry4Yv2t72reSWub8J+fOdzvMIbvVBEvF0DBLnTkES/19UbjOnCdLZSMZAqTOd2XFwjRKxLbdSi8= svelasco@MacBook-Pro.local"
+  public_key = "${file("${path.module}/id_rsa.pub")}"
+
 }
 
 resource "aws_instance" "c3" {
@@ -88,7 +98,7 @@ connection {
    type    = "ssh"
    user    = "centos"
    host    = self.public_ip
-   private_key   = "${file("/Users/svelasco/terraform/id_rsa")}"
+   private_key   = "${file("${path.module}/id_rsa")}"
  }
 
   provisioner "remote-exec" {
@@ -115,7 +125,7 @@ resource "aws_instance" "broker" {
    type    = "ssh"
    user    = "centos"
    host    = self.public_ip
-   private_key   = "${file("/Users/svelasco/terraform/id_rsa")}"
+   private_key   = "${file("${path.module}/id_rsa")}"
  }
 
   provisioner "remote-exec" {
@@ -160,7 +170,7 @@ connection {
    type    = "ssh"
    user    = "centos"
    host    = self.public_ip
-   private_key   = "${file("/Users/svelasco/terraform/id_rsa")}"
+   private_key   = "${file("${path.module}/id_rsa")}"
  }
 
   provisioner "file" {
@@ -239,3 +249,5 @@ resource "null_resource" "ready" {
     command = "exec ./connect.sh&>/dev/null\ndisown"
   }
 }
+
+
