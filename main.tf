@@ -214,7 +214,7 @@ connection {
    "sudo yum install git vim -y >> /tmp/provision.log",
    "mkdir -p ~/cp-ansible/ansible_collections/confluent >> /tmp/provision.log",
    "git clone https://github.com/confluentinc/cp-ansible ~/cp-ansible/ansible_collections/confluent/platform >> /tmp/provision.log",
-   "sed -i 's%collections_paths=%collections_paths=/home/centos/cp-ansible/:%' ~/cp-ansible/ansible_collections/confluent/platform/ansible.cfg >> /tmp/provision.log",
+   "sed -i 's%collections_paths=%collections_paths=./cp-ansible/:%' ~/cp-ansible/ansible_collections/confluent/platform/ansible.cfg >> /tmp/provision.log",
    "cp ~/cp-ansible/ansible_collections/confluent/platform/ansible.cfg .",
    "ansible-playbook -i hosts.yml cp-ansible/ansible_collections/confluent/platform/playbooks/all.yml -vvv  >> /tmp/provision.log"
   ]
