@@ -1,0 +1,10 @@
+Host *.amazonaws.com
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    User centos
+
+Host *.compute.internal
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+

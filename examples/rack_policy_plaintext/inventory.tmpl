@@ -1,0 +1,44 @@
+all:
+# previous versions fail because we do not have schema-registry-plugins-x.x.x before 7x
+  vars:
+    confluent_package_version: 7.2.2
+    default_internal_replication_factor: 4
+
+zookeeper:
+  hosts:
+  %{ for host in zookeepers ~}
+    ${host}:
+  %{ endfor ~}
+
+kafka_broker:
+  kafka_broker_custom_properties:
+    confluent.balancer.enable: "true"
+  hosts:
+  %{ for host in brokers_rack1 ~}
+  ${host}:
+      kafka_broker_custom_properties:
+        broker.rack: rack_1
+        replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
+        confluent.balancer.heal.broker.failure.threshold.ms: 120000
+        # delete stray partitions after failover
+        confluent.enable.stray.partition.deletion: true
+  %{ endfor ~}
+
+  %{ for host in brokers_rack2 ~}
+  ${host}:
+      kafka_broker_custom_properties:
+        broker.rack: rack_2
+        replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
+        # delete stray partitions after failover
+        confluent.enable.stray.partition.deletion: true
+        confluent.balancer.heal.broker.failure.threshold.ms: 120000
+  %{ endfor ~}
+
+
+control_center:
+  hosts:
+    %{ for host in control_centers ~}
+    ${host}:
+    %{ endfor ~}
+
+
